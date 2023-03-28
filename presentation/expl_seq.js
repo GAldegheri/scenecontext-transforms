@@ -277,11 +277,11 @@ var animation_backandforth_same = {
             `background-color: white; line-height:1.4">NO CHANGE<br>(Press F)</strong>`].join(``),
     stimuli: [
       {obj_type: 'image',
-       file: 'Renders_6views_optim/Scene1_60_0030.png',
+       file: [StimDir, `/Scene1_60_0030.png`].join(``),
        show_start_time: 200,
        show_end_time: 700},
       {obj_type: 'image',
-       file: 'Renders_6views_optim/Scene1_60_0030.png',
+       file: [StimDir, `/Scene1_60_0030.png`].join(``),
        show_start_time: 800,
        show_end_time: 1300},
        fix_dot_expl
@@ -294,11 +294,11 @@ var animation_backandforth_same = {
 
 var flip_rot = [
   {obj_type: 'image',
-   file: 'Renders_6views_optim/Scene4_60_0030.png',
+   file: [StimDir, `/Scene4_60_0030.png`].join(``),
    show_start_time: 200,
    show_end_time: 700},
   {obj_type: 'image',
-   file: 'Rotate_6views_optim/Scene4_60_0030_-7.0.png',
+   file: [ProbeDir, `/Scene4_60_0030_-7.0.png`].join(``),
    show_start_time: 800,
    show_end_time: 1300},
    fix_dot_expl
