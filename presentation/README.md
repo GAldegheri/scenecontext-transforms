@@ -2,7 +2,8 @@
 
 To run the experiments in Aldegheri, Gayet & Peelen, "Scene context automatically drives predictions of object transformations" (forthcoming)
 
-![](example_trial.png)
+<!--![](example_trial.png)-->
+<img src="example_trial.png" alt="Outline of trial in the behavioral experiment" width="80%" height="80%">
 
 This code was written using [jsPsych]() version 6.3.0, and:
 - [jsPsych-psychophysics](https://jspsychophysics.hes.kyushu-u.ac.jp/) 2.3.1 by [Daiichiro Kuroki](https://github.com/kurokida/);
