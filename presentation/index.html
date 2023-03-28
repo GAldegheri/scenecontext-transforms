@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Scene experiment</title>
+    <script src="jspsych-6.3.0/jspsych.js"></script>
+    <script src="jspsych-psychophysics.js"></script>
+    <script src="jspsych-6.3.0/plugins/jspsych-preload.js"></script>
+    <script src="jspsych-6.3.0/plugins/jspsych-call-function.js"></script>
+    <script src="jspsych-6.3.0/plugins/jspsych-fullscreen.js"></script>
+    <script src="jspsych-6.3.0/plugins/jspsych-html-keyboard-response.js"></script>
+    <script src="jspsych-6.3.0/plugins/jspsych-html-button-response.js"></script>
+    <script src="jspsych-6.3.0/plugins/jspsych-survey-text.js"></script>
+    <script src="jspsych-6.3.0/plugins/jspsych-survey-likert.js"></script>
+    <script src="jspsych-6.3.0/plugins/jspsych-survey-html-form.js"></script>
+    <script src="jspsych-6.3.0/plugins/jspsych-virtual-chinrest.js"></script>
+    <script src="GA_utils.js"></script>
+    <script src="Create_AllTrials.js"></script>
+    <script src="Settings.js"></script>
+    <script src="Staircase.js"></script>
+    <script src="expl_seq.js"></script>
+    <script src="SurroundRect.js"></script>
+    <link href="jspsych-6.3.0/css/jspsych.css" rel="stylesheet" type="text/css">
+    <!-- Uncomment to run on Pavlovia: -->
+    <!-- <script src="https://code.jquery.com/jquery-3.5.1.min.js" integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin="anonymous"></script>
+    <script type="text/javascript" src="lib/jspsych-pavlovia-3.2.5.js"></script>
+    <script src="bowser.js"></script> -->
+    <style> body {background-color:grey;} </style>
+  </head>
+  <body></body>
+  <script>
+
+  var subject_id = '';
+  var TODAY = new Date();
+  var DD = String(TODAY.getDate()).padStart(2, '0');
+  var MM = String(TODAY.getMonth() + 1).padStart(2, '0');
+  var YYYY = TODAY.getFullYear();
+  const DATE = YYYY + MM + DD;
+  var focus = 'focus'; // tracks if the current tab/window is the active tab/window, initially the current tab should be focused
+  var fullscr_ON = 'no'; // tracks fullscreen activity, initially not activated
+  var timestart = String(TODAY.getTime()).padStart(2, '0');
+
+  jsPsych.data.addProperties({
+    p_exp: P_Exp,
+    browser_name: bowser.name,
+    browser_version: bowser.version,
+    os_name: bowser.osname,
+    os_version: bowser.osversion,
+    screen_resolution: screen.width + 'x' + screen.height,
+    window_resolution: window.innerWidth + 'x' + window.innerHeight,
+    starttime: timestart,
+    date: DATE
+  });
+
+  // Dynamic variables:
+  var curr_ints = [];
+  var int_diff = 0;
+
+  var gaveCorrect = 0;
+  var trialnum = 0;
+  var thisJitter = 0;
+  var training_session = true;
+  var blockacc = 0;
+  var corr_response = '';
+  var trainingresponses = { // simple object to store responses and expected
+    'resp': [],
+    'exp': []
+  };
+  var respond_reminder = false; // whether the reminder to respond to final object appearances has to be shown
+  var repeat_practice = false; // whether to repeat practice (if performance is too low)
+  var trainingreps = 1;
+
+  //var trainIndx = 0;
+
+  var fix_dot = {
+    obj_type: 'circle',
+    startX: 0,
+    startY: 150,
+    radius: 5,
+    origin_center: true,
+    line_color: 'black',
+    fill_color: 'white'
+  };
+
+  // For debugging: --------------------------
+  // to use this, replace "fix_dot" with "debug_dot"
+  // in the rest of the script.
+  var exptrial = NaN;
+  var debug_dot = {
+    obj_type: 'circle',
+    startX: 0,
+    startY: 150,
+    radius: 5,
+    origin_center: true,
+    line_color: 'black',
+    fill_color: function(){
+      if (exptrial==1)
+      {  return 'yellow'; }
+      else if (exptrial==0)
+      { return 'blue'; }
+      else { return 'white'; }
+    }
+  };
+  // -----------------------------------------
+
+  var feedback_node = {
+    timeline: [{
+      type: 'psychophysics',
+      stimuli: [
+        {
+          obj_type: 'circle',
+          startX: 0,
+          startY: 150,
+          radius: 5,
+          origin_center: true,
+          line_color: function(){
+            if (gaveCorrect==1)
+            {return 'rgb(0,255,0)';}
+            else if (gaveCorrect==0) {return 'red';}
+            else {return 'black';}
+          },
+          fill_color: function(){
+            console.log(gaveCorrect);
+            if (gaveCorrect==1)
+            {return 'rgb(0,255,0)';}
+            else if (gaveCorrect==0) {return 'red';}
+            else {return 'black';}
+          }
+        }
+      ],
+      trial_duration: 250
+    }],
+    conditional_function: function(){return GiveFeedback;}
+  };
+
+  function set_trial_params()
+  {
+    console.log("Same or different:", jsPsych.timelineVariable('SameDiff'));
+
+    console.log("current int:", currentInt);
+    // Determine orientations for trial
+    int_diff = currentInt;
+    
+    if (Math.random() > 0.5)
+    { int_diff *= -1;}
+    
+
+    curr_ints[0] = Math.round(GA_utils.randn_bm());
+
+    if (Math.random()>0.5) // same/diff selected randomly
+    { curr_ints[1] = curr_ints[0]; corr_response = 'same'; }
+    else
+    {
+      // There's no limit in the scale task since stimuli are generated on the fly:
+      curr_ints[1] = Math.max(Math.min(curr_ints[0] + int_diff, IntLims[1]), IntLims[0]);
+      corr_response = 'diff';
+    }
+
+    // Determine duration jitter for last image
+    thisJitter = 6000 - Math.random()*500;
+  };
+
+  var set_trial = {
+    type: 'call-function',
+    func: set_trial_params
+  };
+
+  var preload_trial = {
+    type: 'preload',
+    images: function()
+    {
+      preloadimgs = [jsPsych.timelineVariable('img_1'),
+                     jsPsych.timelineVariable('img_2'),
+                     jsPsych.timelineVariable('img_3'),
+                     jsPsych.timelineVariable('img_4'),
+                     jsPsych.timelineVariable('img_5')];
+
+      if (jsPsych.timelineVariable('Expected')==1)
+       { exptrial = 1;
+         var probeView = jsPsych.timelineVariable('InitView');
+         if (training_session==true)
+         {
+           trainingresponses['exp'].push(1);
+         }
+       }
+      else // unexpected
+       {
+         exptrial = 0;
+
+        if (jsPsych.timelineVariable('FinalView')==30) { 
+          var probeView = jsPsych.timelineVariable('InitView') + 60;
+          if (probeView >= 360) { probeView -= 360; }
+          }
+          else { 
+            var probeView = jsPsych.timelineVariable('InitView') - 60;
+            if (probeView < 0) { probeView += 360; }
+          }
+          if (training_session==true)
+          {
+            trainingresponses['exp'].push(0);
+          }
+
+        }
+
+      // Determine probe stimuli
+      if (scaletask)
+      {
+        var ObjImage = [ProbeDir,
+          `/Scene${jsPsych.timelineVariable('Scene')}_${probeView}_`,
+          `${jsPsych.timelineVariable('FinalView').toString().padStart(4, '0')}`,
+          `.png`].join(``);
+        preloadimgs.push(ObjImage);
+        var BgroundImage = [ProbeDir,
+          `/Scene${jsPsych.timelineVariable('Scene')}_Bground_`,
+          `${jsPsych.timelineVariable('FinalView').toString().padStart(4, '0')}`,
+          `.png`].join(``);
+        preloadimgs.push(BgroundImage);
+
+        if (training_session==false)
+        { AllTrials[trialnum].probe_obj = preloadimgs[preloadimgs.length - 2];
+          AllTrials[trialnum].probe_bground = preloadimgs[preloadimgs.length - 1]; }
+        else
+        { DemoTrials[trialnum].probe_obj = preloadimgs[preloadimgs.length - 2];
+          DemoTrials[trialnum].probe_bground = preloadimgs[preloadimgs.length - 1]; }
+      }
+      else {
+        for (var pr = 0; pr < 2; pr++)
+         {
+           var ProbeOrient = Number(curr_ints[pr]);
+           ProbeOrient = `_${ProbeOrient.toFixed(1).toString()}`;
+
+           preloadimgs.push([ProbeDir,
+           `/Scene${jsPsych.timelineVariable('Scene')}_${probeView}_`,
+           `${jsPsych.timelineVariable('FinalView').toString().padStart(4, '0')}`,
+           ProbeOrient, `.png`].join(``));
+           console.log(jsPsych.timelineVariable('InitView'));
+           console.log(trialnum, probeView);
+         }
+         if (training_session==false)
+         { if (trialnum < AllTrials.length)
+           {
+             AllTrials[trialnum].probe_1 = preloadimgs[preloadimgs.length - 2];
+             AllTrials[trialnum].probe_2 = preloadimgs[preloadimgs.length - 1];
+           }
+         }
+         else
+         {
+           console.log('Demo trials:', DemoTrials);
+           if (trialnum < DemoTrials.length)
+           {
+             DemoTrials[trialnum].probe_1 = preloadimgs[preloadimgs.length - 2];
+             DemoTrials[trialnum].probe_2 = preloadimgs[preloadimgs.length - 1];
+           }
+          }
+     }
+     return preloadimgs;
+    },
+    show_progress_bar: false,
+    show_detailed_errors: true
+  };
+
+  var blockend_node = {
+    timeline: [{
+    type: 'html-keyboard-response',
+    stimulus: function(){
+      return [`<div style="font-size: 40px; color: white;">End of block ${trialnum/Blocklen}/${NBlocks}.<br>`,
+              `<br>Your accuracy was ${(blockacc/Blocklen*100).toFixed(2)}%</div>`].join(``);
+    },
+    trial_duration: 4000,
+    choices: jsPsych.NO_KEYS},
+    {
+    type: 'html-keyboard-response',
+    stimulus: `<div style="font-size: 40px; color: white;">Press space to continue</div>`,
+    choices: [' ']
+    }],
+    conditional_function: function(){
+        if ((training_session == false) && (trialnum % Blocklen == 0)){
+            return true;
+        } else {
+            return false;
+        }
+      },
+    on_finish: function(){ blockacc = 0; }
+  };
+
+  var end_training = {
+  type: 'html-keyboard-response',
+  stimulus: function()
+            { return [`<div style="font-size: 40px; color: white; line-height:1.4;">The training session is over!<br>`,
+             `Your accuracy was ${(blockacc/ndemotrials*100).toFixed(2)}%.<br><br>`,
+             `We're ready to start the experiment.<br>In the experiment, there will be a time limit<br>`,
+             `on your response. You don't need to be super fast, but<br>don't think about the response `,
+             `too long<br>or it will skip to the next trial.<br><br>`,
+             `Good luck! :)<br>Press space to continue</div>`].join(``); },
+  choices: [' '],
+  on_finish: function(){ training_session = false; trialnum = 0; blockacc = 0; resetStair();
+    console.log('Training is over.');}
+  };
+
+  var open_fullscreen = {
+    type: 'fullscreen',
+    fullscreen_mode: true
+  };
+
+  var close_fullscreen = {
+    type: 'fullscreen',
+    fullscreen_mode: false,
+    //on_finish: function() {$('body').css('', 'default')}
+  };
+
+  var hide_cursor = {
+    type: 'call-function',
+    func: function(){$('body').css('cursor', 'none')}
+  };
+
+  var show_cursor = {
+    type: 'call-function',
+    func: function(){$('body').css('cursor', 'auto')}
+  };
+
+  // Probe stimuli ---------------------------
+
+  //var bgroundorobj = 0;
+
+  probe_1_startfun = function(){ return thisJitter; };
+  probe_1_endfun = function(){ return thisJitter + jsPsych.timelineVariable('ProbeDuration'); };
+
+  probe_2_startfun = function(){ return thisJitter + 100 + jsPsych.timelineVariable('ProbeDuration'); };
+  probe_2_endfun = function(){  //bgroundorobj = 1 - bgroundorobj;
+                                return thisJitter + 100 + 2*jsPsych.timelineVariable('ProbeDuration'); };
+
+  var probe_stim = (scaletask) ?
+  [ // scaling task:
+  {obj_type: 'image', // background 1
+   file: jsPsych.timelineVariable('probe_bground'),
+   show_start_time: probe_1_startfun,
+   show_end_time: probe_1_endfun},
+  {obj_type: 'image', // object 1
+   file: jsPsych.timelineVariable('probe_obj'),
+   show_start_time: probe_1_startfun,
+   show_end_time: probe_1_endfun,
+   origin_center: true,
+   scale: function(){ return curr_ints[0]; },
+   startY: function(){
+     console.log(curr_ints[0]);
+     Ypos = (1-curr_ints[0])*img_size[1]/2 - (1-curr_ints[0])*150/2;
+     console.log(Ypos);
+     return Ypos;
+   }},
+  {obj_type: 'image', // background 2
+   file: jsPsych.timelineVariable('probe_bground'),
+   show_start_time: probe_2_startfun,
+   show_end_time: probe_2_endfun},
+  {obj_type: 'image', // object 2
+   file: jsPsych.timelineVariable('probe_obj'),
+   show_start_time: probe_2_startfun,
+   show_end_time: probe_2_endfun,
+   origin_center: true,
+   scale: function(){ return curr_ints[1]; },
+   startY: function(){
+     console.log(curr_ints[1]);
+     Ypos = (1-curr_ints[1])*img_size[1]/2 - (1-curr_ints[1])*150/2;
+     return Ypos;
+   }}
+  ] :
+  [ // rotation task:
+    {obj_type: 'image',
+     file: jsPsych.timelineVariable('probe_1'),
+     show_start_time: probe_1_startfun,
+     show_end_time: probe_1_endfun},
+    {obj_type: 'image',
+     file: jsPsych.timelineVariable('probe_2'),
+     show_start_time: probe_2_startfun,
+     show_end_time: probe_2_endfun}
+  ];
+  // -----------------------------------------
+
+  var stimulus_sequence =
+  {
+    type: 'psychophysics',
+    data: {trial_name: 'stimulus_sequence',
+           training_session: function() { return training_session; },
+           Scene: jsPsych.timelineVariable('Scene'),
+           Expected: jsPsych.timelineVariable('Expected'),
+           InitView: jsPsych.timelineVariable('InitView'),
+           FinalView: jsPsych.timelineVariable('FinalView'),
+           int_diff: function() { return int_diff; },
+           img_1: jsPsych.timelineVariable('img_1'),
+           img_2: jsPsych.timelineVariable('img_2'),
+           img_3: jsPsych.timelineVariable('img_3'),
+           img_4: jsPsych.timelineVariable('img_4'),
+           img_5: jsPsych.timelineVariable('img_5'),
+           probe_1: jsPsych.timelineVariable('probe_1'),
+           probe_2: jsPsych.timelineVariable('probe_2'),
+           probe_obj: jsPsych.timelineVariable('probe_obj'),
+           probe_bground: jsPsych.timelineVariable('probe_bground')
+           },
+    stimuli: [
+      {
+        obj_type: 'image',
+        file: jsPsych.timelineVariable('img_1'),
+        show_start_time: 500,
+        show_end_time: 2500,
+      },
+      {
+        obj_type: 'image',
+        file: jsPsych.timelineVariable('img_2'),
+        show_start_time: 2500,
+        show_end_time: 3000
+      },
+      {
+        obj_type: 'image',
+        file: jsPsych.timelineVariable('img_3'),
+        show_start_time: 3000,
+        show_end_time: 3500,
+      },
+      {
+        obj_type: 'image',
+        file: jsPsych.timelineVariable('img_4'),
+        show_start_time: 3500,
+        show_end_time: 4000,
+      },
+      {
+        obj_type: 'image',
+        file: jsPsych.timelineVariable('img_5'),
+        show_start_time: 4000,
+        show_end_time: function(){ return thisJitter; }
+      },
+      { // occluder
+        obj_type: 'rect',
+        startX: 0,
+        startY: function()
+        {
+          var y_min = box_coords[jsPsych.timelineVariable('Scene')-1][jsPsych.timelineVariable('InitView')][1];
+          var height = box_coords[jsPsych.timelineVariable('Scene')-1][jsPsych.timelineVariable('InitView')][3];
+          return -(img_size[1]/2 - y_min) + height/2;
+        },
+        origin_center: true,
+        width: function()
+        {
+          return box_coords[jsPsych.timelineVariable('Scene')-1][jsPsych.timelineVariable('InitView')][2] + x_margin;
+          //return 330 + x_margin;
+        },
+        height: function()
+        {
+          return box_coords[jsPsych.timelineVariable('Scene')-1][jsPsych.timelineVariable('InitView')][3] + y_margin;
+        },
+        fill_color: 'grey',
+        show_start_time: 3000,
+        show_end_time: function(){ return thisJitter; }
+      },
+      ...probe_stim,
+      LeftRect,
+      RightRect,
+      BottomRect,
+      TopRect,
+      fix_dot], // always present
+      trial_duration: function(){return thisJitter + 100 + 2*jsPsych.timelineVariable('ProbeDuration');},
+      choices: jsPsych.NO_KEYS
+   };
+
+   var response_sequence =
+   { // give response
+     type: 'psychophysics',
+     data: {trial_name: 'response_sequence',
+            training_session: function() { return training_session; }},
+     stimuli: [fix_dot],
+     choices: possibleresp,
+     trial_duration: function(){if (training_session==true){return null;}else{return 2500;}},
+     on_finish: function(data)
+     {
+       console.log(corr_response);
+       if (corr_response=='same')
+       { var corr_ind = 0; }
+       else { var corr_ind = 1; }
+
+       data.corr_resp = possibleresp[corr_ind];
+       if (data.response==null)
+       { gaveCorrect = null; }
+       else if (jsPsych.pluginAPI.compareKeys(data.response, data.corr_resp))
+       { gaveCorrect = 1; }
+       else if (jsPsych.pluginAPI.compareKeys(data.response, possibleresp[1-corr_ind]))
+       { gaveCorrect = 0; }
+       
+       if (training_session==true)
+       {
+         trainingresponses['resp'].push(possibleresp.indexOf(data.response));
+       }
+
+       blockacc += gaveCorrect;
+       trialnum += 1;
+       console.log("int diff:", int_diff);
+       
+       if (gaveCorrect != null)
+       { updateInt(); } else {console.log("No response!");}
+     }
+   };
+
+   var train_trial = {
+     timeline: [
+       set_trial,
+       preload_trial,
+       stimulus_sequence,
+       response_sequence,
+       feedback_node,
+       repeat_practice_msg,
+       respond_to_final
+       ],
+       timeline_variables: DemoTrials,
+       sample: {
+         type: 'custom',
+         fn: function(t){
+           return t.slice((trainingreps-1)*ndemotrials, (trainingreps-1)*ndemotrials+ndemotrials);
+         }
+       },
+       loop_function: function(data){
+         console.log("This is the loop function!"); // check that this is run after every training session, not every trial
+         if (conditionalpractice)
+         {
+           // Get the overall accuracy across training block:
+           var acc = blockacc/ndemotrials;
+           console.log('Training accuracy:', acc);
+           console.log('Training repetition:', trainingreps);
+           if (acc < 0.7){ repeat_practice = true; trainingreps += 1; } else { repeat_practice = false; }
+           console.log('Updated training repetition:', trainingreps);
+
+           // count how many times participant
+           // responded 'different' to an unexpected trial
+           // (and viceversa):
+           var respondtounexp = 0;
+           for (let i = 0; i < trainingresponses['resp'].length; i++)
+           {
+             if (trainingresponses['resp'][i]==(1 - trainingresponses['exp'][i]))
+             { respondtounexp += 1; }
+           }
+           if ((repeat_practice==true) && (trainingreps<=max_practicereps))
+           {
+             if (respondtounexp/ndemotrials >= 0.7)
+             {
+               // show message
+               respond_reminder = true;
+             } else { respond_reminder = false; }
+
+             return true;
+           } else {
+             return false;
+           }
+           // reset trainingresponses
+           trainingresponses = {
+             'resp': [],
+             'exp': []
+           };
+
+         } else {
+           return false; // don't repeat if conditional practice is off
+         }
+       }
+   };
+
+   var main_trial = {
+      timeline: [
+        set_trial,
+        preload_trial,
+        stimulus_sequence,
+        response_sequence,
+        feedback_node,
+        blockend_node
+        ],
+        timeline_variables: AllTrials //.slice(0, 4)
+    };
+
+    //--------------------------------------------------------------------------
+
+    /* init connection with pavlovia.org */
+    var pavlovia_init = {
+    	type: 'pavlovia',
+    	command: 'init'
+    };
+
+    var pavlovia_posttraining = {
+      type: 'pavlovia',
+      command: 'finish',
+      participantId: function(){ return subject_id + `_posttraining`; }
+    };
+
+    var wait_posttraining = {
+      type: 'html-keyboard-response',
+      stimulus: [`<div style="font-size: 40px; color: white;line-height:1.4;">Please wait a few seconds while<br>`,
+                 `we load the experiment.</div>`].join(``),
+      trial_duration: 4000,
+      choices: jsPsych.NO_KEYS
+    };
+
+    var pavlovia_presurvey = {
+      type: 'pavlovia',
+    	command: 'finish',
+      participantId: function(){ return subject_id + `_presurvey`; }
+    };
+
+    var wait_presurvey = {
+      type: 'html-keyboard-response',
+      stimulus: [`<div style="font-size: 40px; color: white; line-height:1.4;">Please wait a few seconds while<br>`,
+                 `we load the final survey.</div>`].join(``),
+      trial_duration: 4000,
+      choices: jsPsych.NO_KEYS
+    };
+
+    /* finish connection with pavlovia.org */
+    var pavlovia_finish = {
+    	type: 'pavlovia',
+    	command: 'finish',
+      participantId: function(){return subject_id;}
+    };
+
+    var final_wait = {
+      type: 'html-keyboard-response',
+      stimulus: [`<div style="font-size: 40px; color: white; line-height:1.4;">Please wait a few seconds while<br>`,
+                 `we save the data.<br><br>Don't close the window!</div>`].join(``),
+      trial_duration: 3000,
+      choices: jsPsych.NO_KEYS
+    };
+
+    var insert_id = {
+      type: 'survey-text',
+      data: {trial_name: 'insert_id'},
+      questions: [{prompt: [`<div style="font-size: 24px; color: white; line-height:1.4;">`,
+      `Please insert your Prolific ID:<br>(Make sure it's correct, it's important for the payment)`].join(``)}],
+      on_finish: function(data){ subject_id = data.response['Q0']; jsPsych.data.addProperties({subject_id: subject_id}); }
+    };
+
+    var final_message = {
+      type: 'html-button-response',
+      stimulus: [`<div style="font-size: 30px; color: black; line-height:1.4;">The experiment is over. Great job!<br>`,
+                 `Now you will just need to answer a few short questions before finishing.</div>`].join(``),
+      choices: ['Continue'],
+      margin_vertical: '50px'
+    };
+
+    var survey_scale = [
+      "1 - Not at all",
+      "2", "3", "4", "5", "6",
+      "7 - All the time"
+    ];
+
+    var final_survey = {
+      timeline: [
+        {
+          type: 'survey-likert',
+          data: {trial_name: 'final_survey'},
+          questions: [
+            {prompt: [`<div style="font-size: 24px; color: black; line-height:1.4;">`,
+                       `Your task was only on the final image, when the object changed or not.<br>`,
+                       `Did you also pay attention to the sequence of images before the task image?</div>`].join(``),
+             labels: survey_scale}
+          ],
+          scale_width: 800
+        },
+        {
+          type: 'survey-likert',
+          data: {trial_name: 'final_survey'},
+          questions: [
+            {prompt:  [`<div style="font-size: 24px; color: black; line-height:1.4;">`,
+                `When the scene rotated, did you anticipate seeing the object<br>`,
+                `in the correct viewpoint after it reappeared?`].join(``),
+             labels: survey_scale}
+          ],
+          scale_width: 800
+        },
+        {
+          type: 'survey-html-form',
+          data: {trial_name: 'final_survey'},
+          preamble: [`<div style="font-size: 24px; color: black; line-height:1.4;">`,
+                     `What percentage of objects were in line with your expectation?<br>`,
+                     `(They reappeared with the correct viewpoint)`].join(``),
+          html: [`<p><input type="number" style="font-size: 20px;" name="rangeInput" id="test-resp"`,
+          ` min="0" max="100">%</p>`].join(``),
+          autofocus: 'test-resp'
+        },
+        {
+          type: 'survey-text',
+          data: {trial_name: 'final_survey'},
+          questions: [
+            {prompt: [`<div style="font-size: 24px; color: black; line-height:1.4;">`,
+                      `Any other comments?<br>e.g. did you notice something about the images,<br>`,
+                      `did you use a specific strategy, or anything else...?`].join(``), rows: 5}],
+        }
+      ]
+    };
+
+    var debrief = {
+      type: 'html-keyboard-response',
+      stimulus: function()
+      {
+                return [`<div style="font-size: 30px; color: white; line-height:1.4;">`,
+                 `Thanks a lot for participating!<br><br>`,
+                 `The purpose of this experiment was to investigate how we use<br>`,
+                 `contextual information (e.g., the angle at which we view the room)<br>`,
+                 `to anticipate what objects will look like<br>`,
+                 `(e.g., the angle at which we expect to see the bed/sofa).<br><br>`,
+                 `In this experiment, we tested your perception of the object<br>`,
+                 `with a simple task: reporting whether it had changed.<br>`,
+                 `If it's true that we use contextual information,<br>`,
+                 `we predicted that you would be better at this task<br>`,
+                 `when the object remained in the same (expected) position<br>`,
+                 `with respect to the room, compared to when<br>`,
+                 `it was rotated with respect to the room.<br><br>`,
+                 `Press space to finish.</div>`].join(``);
+               },
+      choices: [' ']
+    };
+
+    var resize = {
+      type: 'virtual-chinrest',
+      item_path: 'jspsych-6.3.0/examples/img/card.png',
+      prompt: "<p>Click and drag the lower right corner of the box until the box is the same size as a credit card held up to the screen.</p>",
+      resize_units: 'cm',
+      pixels_per_unit: 48,
+      blindspot_reps: 0,
+      viewing_distance_report: 'none'
+    };
+
+    var end_early = { // in case participant doesn't reach performance within 4 repetitions of training
+      timeline: [
+        show_cursor,
+        {
+          type: 'html-button-response',
+          stimulus: function() {
+            return [`<div style="font-size: 40px; color: white; line-height:1.4;">`,
+                    `Sorry, unfortunately you didn't reach the required performance,<br>`,
+                    `so the experiment will end here.<br>`,
+                    `We are aware it's a hard task.<br><br>`,
+                    `You are still entitled to a partial payment for your time.<br><br>`,
+                    `Please copy this completion code and fill it on Prolific:<br>`,
+                    `INCOMPL7</div>`].join(``);
+          },
+          choices: ['Done.'],
+          margin_vertical: '50px'
+        },
+        debrief,
+        close_fullscreen,
+        pavlovia_posttraining
+      ],
+      conditional_function: function()
+      {
+        return (trainingreps > max_practicereps);
+      },
+      /*on_finish: function() {
+        console.log('Experiment is over!');
+        jsPsych.endExperiment('Goodbye!'); }*/
+    };
+
+    var close_early = {
+      type: 'call-function',
+      func: function()
+      {
+        if (trainingreps > max_practicereps)
+        { jsPsych.endExperiment('You may now close the window.'); }
+      }
+    };
+
+    jsPsych.init({
+        // Run locally:
+        /*timeline: [open_fullscreen, insert_id, resize,
+                   whole_explanation, hide_cursor, train_trial,
+                   end_early, close_early,
+                   end_training, wait_posttraining,
+                   main_trial, show_cursor, final_message,
+                   wait_presurvey, final_survey, 
+                   debrief, final_wait, close_fullscreen],*/
+        timeline: [pavlovia_init, open_fullscreen, insert_id, resize,
+                   whole_explanation, hide_cursor, train_trial,
+                   end_early, close_early,
+                   end_training, pavlovia_posttraining, wait_posttraining,
+                   main_trial, show_cursor, final_message,
+                   pavlovia_presurvey, wait_presurvey,
+                   final_survey, pavlovia_finish,
+                   debrief, final_wait, close_fullscreen],
+        on_data_update: function (data)
+        {
+         // everytime there is a data update update also window resolution
+         data.window_resolution = window.innerWidth + 'x' + window.innerHeight;
+         // and if the experiment is on the active window or not
+         data.focus = focus; data.Fullscreen = fullscr_ON;
+        },
+        on_interaction_data_update: function (data)
+        { //interaction data logs if participant leaves the browser window or exits full screen mode
+
+           interaction = data.event;
+
+           if (interaction.includes("fullscreen")) {
+               // some unhandy coding to circumvent a bug in jspsych that logs fullscreenexit when actually entering
+               if (fullscr_ON == 'no') { fullscr_ON = 'yes'; return fullscr_ON }
+
+               else if (fullscr_ON == 'yes') { fullscr_ON = 'no'; return fullscr_ON }
+
+           } else if (interaction == 'blur' || interaction == 'focus') {
+
+               focus = interaction;
+
+               return focus;
+
+           }
+        },
+        on_finish: function()
+        { // If running on Prolific, use this to direct to completion page:
+          /*if (trainingreps <= max_practicereps)
+        { window.location = "https://app.prolific.co/submissions/complete?cc=<exp-code>"; }*/
+        }
+    });
+
+  </script>
+</html>
