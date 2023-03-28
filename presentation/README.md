@@ -12,3 +12,5 @@ This code was written using [jsPsych]() version 6.3.0, and:
 This code is ready to be run locally, but it can be adapted to run experiments on platforms such as [Pavlovia](), as well as to interface with participant recruiting platforms such as [Prolific](). 
 
 Experimental stimuli can be downloaded [here](https://osf.io/wnefh/).
+
+Tested using Google Chrome on Mac.
