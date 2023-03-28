@@ -27,10 +27,6 @@ var samediff_expl_rot = [
             `background-color: white; line-height:1.4">Here it did NOT change.</strong>`].join(``)}
 ];
 
-//var samediff_expl = (scaletask) ? samediff_expl_scale : samediff_expl_rot;
-var samediff_expl = (zoomseq) ? samediff_expl_zoom : samediff_expl_rot;
-var expl_prompts = (samediff) ? samediff_expl : afc2_expl;
-
 // -----------------------------------------------------------------------------
 // Normal rotation sequence
 // -----------------------------------------------------------------------------
@@ -88,20 +84,17 @@ var allviews_expl_2 = [
 
 // -----------------------------------------------------------------------------
 
-var expl_stimseq_1 = allviews_expl_1;
-var expl_stimseq_2 = allviews_expl_2;
-
 const explanation_images = [
-  ...expl_stimseq_1,
+  ...allviews_expl_1,
   // -------------
-  expl_prompts[0],
-  expl_prompts[1],
-  expl_prompts[2],
-  expl_prompts[3],
+  samediff_expl_rot[0],
+  samediff_expl_rot[1],
+  samediff_expl_rot[2],
+  samediff_expl_rot[3],
   // -------------
-  ...expl_stimseq_2,
+  ...allviews_expl_2,
   // -------------
-  expl_prompts[4]
+  samediff_expl_rot[4]
 ];
 
 var preload_expl = {
@@ -217,8 +210,7 @@ var explanation_sequence =
           },
           height: function()
           {
-            var whichview = (zoomseq) ? '2.0' : 0;
-            var thisheight = box_coords[0][whichview][3] + y_margin;
+            var thisheight = box_coords[0][0][3] + y_margin;
             return thisheight;
           },
           fill_color: 'grey',
