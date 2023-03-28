@@ -19,9 +19,9 @@ const step_size = 1; // to be halved after 3 reversals
 
 const ndemotrials = 12;
 
-// Directories:
-const ProbeDir = `Rotate_6views_linear_optim`;
-const StimDir = `Renders_6views_linear_optim`;
+// Stimulus directories:
+const ProbeDir = `probe_images`;
+const StimDir = `sequence_images`;
 
 var box_coords = [ // lookup table of bounding boxes for every scene/view
   {0: [317, 343, 320, 162],
