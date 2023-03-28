@@ -2,5 +2,4 @@
 .vscode/
 sequence_images/
 probe_images/
-sequence_images.zip
-probe_images.zip
+data/
