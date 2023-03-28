@@ -304,8 +304,7 @@
   probe_1_endfun = function(){ return thisJitter + jsPsych.timelineVariable('ProbeDuration'); };
 
   probe_2_startfun = function(){ return thisJitter + 100 + jsPsych.timelineVariable('ProbeDuration'); };
-  probe_2_endfun = function(){  //bgroundorobj = 1 - bgroundorobj;
-                                return thisJitter + 100 + 2*jsPsych.timelineVariable('ProbeDuration'); };
+  probe_2_endfun = function(){  return thisJitter + 100 + 2*jsPsych.timelineVariable('ProbeDuration'); };
 
   var probe_stim = [ 
     {obj_type: 'image',
@@ -447,56 +446,12 @@
        stimulus_sequence,
        response_sequence,
        feedback_node,
-       repeat_practice_msg,
-       respond_to_final
        ],
        timeline_variables: DemoTrials,
        sample: {
          type: 'custom',
          fn: function(t){
            return t.slice((trainingreps-1)*ndemotrials, (trainingreps-1)*ndemotrials+ndemotrials);
-         }
-       },
-       loop_function: function(data){
-         console.log("This is the loop function!"); // check that this is run after every training session, not every trial
-         if (conditionalpractice)
-         {
-           // Get the overall accuracy across training block:
-           var acc = blockacc/ndemotrials;
-           console.log('Training accuracy:', acc);
-           console.log('Training repetition:', trainingreps);
-           if (acc < 0.7){ repeat_practice = true; trainingreps += 1; } else { repeat_practice = false; }
-           console.log('Updated training repetition:', trainingreps);
-
-           // count how many times participant
-           // responded 'different' to an unexpected trial
-           // (and viceversa):
-           var respondtounexp = 0;
-           for (let i = 0; i < trainingresponses['resp'].length; i++)
-           {
-             if (trainingresponses['resp'][i]==(1 - trainingresponses['exp'][i]))
-             { respondtounexp += 1; }
-           }
-           if ((repeat_practice==true) && (trainingreps<=max_practicereps))
-           {
-             if (respondtounexp/ndemotrials >= 0.7)
-             {
-               // show message
-               respond_reminder = true;
-             } else { respond_reminder = false; }
-
-             return true;
-           } else {
-             return false;
-           }
-           // reset trainingresponses
-           trainingresponses = {
-             'resp': [],
-             'exp': []
-           };
-
-         } else {
-           return false; // don't repeat if conditional practice is off
          }
        }
    };
@@ -510,7 +465,7 @@
         feedback_node,
         blockend_node
         ],
-        timeline_variables: AllTrials //.slice(0, 4)
+        timeline_variables: AllTrials
     };
 
     //--------------------------------------------------------------------------
