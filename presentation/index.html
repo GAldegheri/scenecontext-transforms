@@ -202,56 +202,35 @@
         }
 
       // Determine probe stimuli
-      if (scaletask)
-      {
-        var ObjImage = [ProbeDir,
+      for (var pr = 0; pr < 2; pr++)
+        {
+          var ProbeOrient = Number(curr_ints[pr]);
+          ProbeOrient = `_${ProbeOrient.toFixed(1).toString()}`;
+
+          preloadimgs.push([ProbeDir,
           `/Scene${jsPsych.timelineVariable('Scene')}_${probeView}_`,
           `${jsPsych.timelineVariable('FinalView').toString().padStart(4, '0')}`,
-          `.png`].join(``);
-        preloadimgs.push(ObjImage);
-        var BgroundImage = [ProbeDir,
-          `/Scene${jsPsych.timelineVariable('Scene')}_Bground_`,
-          `${jsPsych.timelineVariable('FinalView').toString().padStart(4, '0')}`,
-          `.png`].join(``);
-        preloadimgs.push(BgroundImage);
-
+          ProbeOrient, `.png`].join(``));
+          console.log(jsPsych.timelineVariable('InitView'));
+          console.log(trialnum, probeView);
+        }
         if (training_session==false)
-        { AllTrials[trialnum].probe_obj = preloadimgs[preloadimgs.length - 2];
-          AllTrials[trialnum].probe_bground = preloadimgs[preloadimgs.length - 1]; }
-        else
-        { DemoTrials[trialnum].probe_obj = preloadimgs[preloadimgs.length - 2];
-          DemoTrials[trialnum].probe_bground = preloadimgs[preloadimgs.length - 1]; }
-      }
-      else {
-        for (var pr = 0; pr < 2; pr++)
-         {
-           var ProbeOrient = Number(curr_ints[pr]);
-           ProbeOrient = `_${ProbeOrient.toFixed(1).toString()}`;
-
-           preloadimgs.push([ProbeDir,
-           `/Scene${jsPsych.timelineVariable('Scene')}_${probeView}_`,
-           `${jsPsych.timelineVariable('FinalView').toString().padStart(4, '0')}`,
-           ProbeOrient, `.png`].join(``));
-           console.log(jsPsych.timelineVariable('InitView'));
-           console.log(trialnum, probeView);
-         }
-         if (training_session==false)
-         { if (trialnum < AllTrials.length)
-           {
-             AllTrials[trialnum].probe_1 = preloadimgs[preloadimgs.length - 2];
-             AllTrials[trialnum].probe_2 = preloadimgs[preloadimgs.length - 1];
-           }
-         }
-         else
-         {
-           console.log('Demo trials:', DemoTrials);
-           if (trialnum < DemoTrials.length)
-           {
-             DemoTrials[trialnum].probe_1 = preloadimgs[preloadimgs.length - 2];
-             DemoTrials[trialnum].probe_2 = preloadimgs[preloadimgs.length - 1];
-           }
+        { if (trialnum < AllTrials.length)
+          {
+            AllTrials[trialnum].probe_1 = preloadimgs[preloadimgs.length - 2];
+            AllTrials[trialnum].probe_2 = preloadimgs[preloadimgs.length - 1];
           }
-     }
+        }
+        else
+        {
+          console.log('Demo trials:', DemoTrials);
+          if (trialnum < DemoTrials.length)
+          {
+            DemoTrials[trialnum].probe_1 = preloadimgs[preloadimgs.length - 2];
+            DemoTrials[trialnum].probe_2 = preloadimgs[preloadimgs.length - 1];
+          }
+        }
+     
      return preloadimgs;
     },
     show_progress_bar: false,
@@ -328,41 +307,7 @@
   probe_2_endfun = function(){  //bgroundorobj = 1 - bgroundorobj;
                                 return thisJitter + 100 + 2*jsPsych.timelineVariable('ProbeDuration'); };
 
-  var probe_stim = (scaletask) ?
-  [ // scaling task:
-  {obj_type: 'image', // background 1
-   file: jsPsych.timelineVariable('probe_bground'),
-   show_start_time: probe_1_startfun,
-   show_end_time: probe_1_endfun},
-  {obj_type: 'image', // object 1
-   file: jsPsych.timelineVariable('probe_obj'),
-   show_start_time: probe_1_startfun,
-   show_end_time: probe_1_endfun,
-   origin_center: true,
-   scale: function(){ return curr_ints[0]; },
-   startY: function(){
-     console.log(curr_ints[0]);
-     Ypos = (1-curr_ints[0])*img_size[1]/2 - (1-curr_ints[0])*150/2;
-     console.log(Ypos);
-     return Ypos;
-   }},
-  {obj_type: 'image', // background 2
-   file: jsPsych.timelineVariable('probe_bground'),
-   show_start_time: probe_2_startfun,
-   show_end_time: probe_2_endfun},
-  {obj_type: 'image', // object 2
-   file: jsPsych.timelineVariable('probe_obj'),
-   show_start_time: probe_2_startfun,
-   show_end_time: probe_2_endfun,
-   origin_center: true,
-   scale: function(){ return curr_ints[1]; },
-   startY: function(){
-     console.log(curr_ints[1]);
-     Ypos = (1-curr_ints[1])*img_size[1]/2 - (1-curr_ints[1])*150/2;
-     return Ypos;
-   }}
-  ] :
-  [ // rotation task:
+  var probe_stim = [ 
     {obj_type: 'image',
      file: jsPsych.timelineVariable('probe_1'),
      show_start_time: probe_1_startfun,
