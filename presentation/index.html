@@ -471,6 +471,7 @@
     //--------------------------------------------------------------------------
 
     /* init connection with pavlovia.org */
+    /*
     var pavlovia_init = {
     	type: 'pavlovia',
     	command: 'init'
@@ -481,6 +482,7 @@
       command: 'finish',
       participantId: function(){ return subject_id + `_posttraining`; }
     };
+    */
 
     var wait_posttraining = {
       type: 'html-keyboard-response',
@@ -637,7 +639,7 @@
         },
         debrief,
         close_fullscreen,
-        pavlovia_posttraining
+        //pavlovia_posttraining
       ],
       conditional_function: function()
       {
@@ -659,21 +661,21 @@
 
     jsPsych.init({
         // Run locally:
-        /*timeline: [open_fullscreen, insert_id, resize,
+        timeline: [open_fullscreen, insert_id, resize,
                    whole_explanation, hide_cursor, train_trial,
                    end_early, close_early,
                    end_training, wait_posttraining,
                    main_trial, show_cursor, final_message,
                    wait_presurvey, final_survey, 
-                   debrief, final_wait, close_fullscreen],*/
-        timeline: [pavlovia_init, open_fullscreen, insert_id, resize,
+                   debrief, final_wait, close_fullscreen],
+        /*timeline: [pavlovia_init, open_fullscreen, insert_id, resize,
                    whole_explanation, hide_cursor, train_trial,
                    end_early, close_early,
                    end_training, pavlovia_posttraining, wait_posttraining,
                    main_trial, show_cursor, final_message,
                    pavlovia_presurvey, wait_presurvey,
                    final_survey, pavlovia_finish,
-                   debrief, final_wait, close_fullscreen],
+                   debrief, final_wait, close_fullscreen],*/
         on_data_update: function (data)
         {
          // everytime there is a data update update also window resolution
