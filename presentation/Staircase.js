@@ -63,7 +63,7 @@ function updateInt()
       }
   }
   // update:
-  if (!((conditionalpractice) && (training_session)))
+  if (!(training_session))
   {
     console.log("current int: ", currentInt);
     console.log("next int: ", nextInt);
