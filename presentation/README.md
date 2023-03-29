@@ -1,6 +1,6 @@
 # Experiment running code
 
-To run the experiments in Aldegheri, Gayet & Peelen, "Scene context automatically drives predictions of object transformations" (forthcoming)
+To run the experiments in "Scene context automatically drives predictions of object transformations" (forthcoming)
 
 <!--![](example_trial.png)-->
 <img src="example_trial.png" alt="Outline of trial in the behavioral experiment" width="80%" height="80%">
