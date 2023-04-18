@@ -1,6 +1,6 @@
 .DS_Store
 .vscode/
-sequence_images/
-probe_images/
+presentation/sequence_images/
+presentation/probe_images/
 analysis/data/
 analysis/__pycache__/
