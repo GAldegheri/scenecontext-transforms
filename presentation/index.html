@@ -622,58 +622,18 @@
       viewing_distance_report: 'none'
     };
 
-    var end_early = { // in case participant doesn't reach performance within 4 repetitions of training
-      timeline: [
-        show_cursor,
-        {
-          type: 'html-button-response',
-          stimulus: function() {
-            return [`<div style="font-size: 40px; color: white; line-height:1.4;">`,
-                    `Sorry, unfortunately you didn't reach the required performance,<br>`,
-                    `so the experiment will end here.<br>`,
-                    `We are aware it's a hard task.<br><br>`,
-                    `You are still entitled to a partial payment for your time.<br><br>`,
-                    `Please copy this completion code and fill it on Prolific:<br>`,
-                    `INCOMPL7</div>`].join(``);
-          },
-          choices: ['Done.'],
-          margin_vertical: '50px'
-        },
-        debrief,
-        close_fullscreen,
-        //pavlovia_posttraining
-      ],
-      conditional_function: function()
-      {
-        return (trainingreps > max_practicereps);
-      },
-      /*on_finish: function() {
-        console.log('Experiment is over!');
-        jsPsych.endExperiment('Goodbye!'); }*/
-    };
-
-    var close_early = {
-      type: 'call-function',
-      func: function()
-      {
-        if (trainingreps > max_practicereps)
-        { jsPsych.endExperiment('You may now close the window.'); }
-      }
-    };
-
     jsPsych.init({
         // Run locally:  
         timeline: [open_fullscreen, resize,
                    whole_explanation, 
                    hide_cursor, train_trial,
-                   end_early, close_early,
                    end_training, wait_posttraining,
                    main_trial, show_cursor, final_message,
                    wait_presurvey, final_survey, 
                    debrief, final_wait, close_fullscreen],
+        // Run on Pavlovia:
         /*timeline: [pavlovia_init, open_fullscreen, insert_id, resize,
                    whole_explanation, hide_cursor, train_trial,
-                   end_early, close_early,
                    end_training, pavlovia_posttraining, wait_posttraining,
                    main_trial, show_cursor, final_message,
                    pavlovia_presurvey, wait_presurvey,
@@ -707,8 +667,8 @@
         },
         on_finish: function()
         { // If running on Prolific, use this to direct to completion page:
-          /*if (trainingreps <= max_practicereps)
-        { window.location = "https://app.prolific.co/submissions/complete?cc=<exp-code>"; }*/
+          /*
+          window.location = "https://app.prolific.co/submissions/complete?cc=<exp-code>";*/
         }
     });
 
