@@ -1,7 +1,5 @@
 # Data analysis code
 
-To analyze the data in "Scene context automatically drives predictions of object transformations" (forthcoming).
-
 This code was tested using Python 3.7.10. The dependencies can be found in [requirements.txt](./requirements.txt).
 
 To setup a Conda environment to run this code:
